@@ -34,17 +34,22 @@
   "tools": {
     "profile": "messaging",
     "deny": [
+      "group:automation",
       "group:runtime",
+      "group:fs",
       "sessions_spawn",
       "sessions_send",
-      "gateway"
+      "gateway",
+      "cron"
     ],
     "fs": { "workspaceOnly": true },
     "exec": {
-      "security": "ask",
+      "security": "deny",
       "ask": "always"
     },
-    "elevated": { "enabled": false }
+    "elevated": { "enabled": false },
+    "strictInlineEval": true,
+    "autoAllowSkills": false
   },
 
   "browser": {

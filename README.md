@@ -1,23 +1,29 @@
 # OpenClaw Safe Setup
 
-A secure, scripted setup for OpenClaw on a Mac Mini. Every guardrail in place from the start.
+Most OpenClaw setups are insecure out of the box. `openclaw onboard` doesn't create a dedicated user, doesn't lock file permissions, doesn't set DM allowlists, and doesn't run a security audit. In early 2026, researchers found thousands of exposed OpenClaw instances and over 1,000 malicious skills on ClawHub. This repo exists because the defaults aren't safe enough.
 
-Drop this folder into [Claude Code](https://claude.ai/code) and say **"set up OpenClaw using this guide"**. Claude walks you through every step, checks for the latest versions online, and configures everything.
-
-Or follow the steps manually below.
+**Drop this folder into [Claude Code](https://claude.ai/code) and say "set up OpenClaw using this guide."** Claude walks you through every step, checks online for the latest versions, and configures everything. Takes about 10 minutes.
 
 ---
 
-## What This Does
+## What This Does (That `openclaw onboard` Doesn't)
 
-- Creates a **dedicated macOS user** (isolated from your personal account)
-- Installs OpenClaw with **loopback-only networking** (not exposed to the internet)
-- Configures **token-based authentication** on the gateway
-- Sets up **Telegram** as your messaging interface with DM allowlisting
-- Installs a **launchd daemon** that auto-starts on boot and auto-restarts on crash
-- Installs **4 verified skills** (security scanner, web search, Google Workspace, Apple Reminders)
-- Runs a **full security verification** at the end
-- Locks file permissions, disables Bonjour, and redacts secrets from logs
+| | `openclaw onboard` | This repo |
+|---|---|---|
+| Dedicated non-admin user | No | Yes |
+| Loopback-only networking | No | Yes |
+| DM allowlist | No | Yes |
+| File permission lockdown | No | Yes (700/600) |
+| Config immutability | No | Yes (`chflags uchg`) |
+| Security scanner skill | No | Yes (installed first) |
+| 15-point verification | No | Yes |
+| Auto-checks for latest versions | No | Yes (via Claude Code) |
+
+Plus:
+- Token-based gateway authentication
+- launchd daemon with auto-start and crash recovery
+- 4 verified skills pre-installed
+- Bonjour/mDNS disabled, secrets redacted from logs
 
 ## What You Need
 
@@ -82,7 +88,8 @@ sudo -u openclaw -i bash $(pwd)/scripts/setup-briefing.sh
 | DMs | Allowlist (only your Telegram ID) |
 | Sessions | Per-channel-peer isolation |
 | Filesystem | Workspace-only access |
-| Exec | Ask-always mode |
+| Exec | Deny by default |
+| Config | Immutable (`chflags uchg`) |
 | Discovery | mDNS/Bonjour disabled |
 | Logging | API keys auto-redacted |
 | Daemon | Auto-start, auto-restart, crash recovery |

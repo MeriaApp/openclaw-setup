@@ -38,14 +38,14 @@ else
   echo "Homebrew: $(brew --version | head -1)"
 fi
 
-# Install Node.js if missing or outdated
+# Install Node.js if missing or outdated (OpenClaw requires Node 22.14+)
 if ! command -v node &>/dev/null; then
   echo "Installing Node.js..."
   brew install node
 else
   NODE_MAJOR=$(node -v | cut -d. -f1 | tr -d 'v')
-  if [[ "$NODE_MAJOR" -lt 20 ]]; then
-    echo "Upgrading Node.js (need v20+, have v$(node -v))..."
+  if [[ "$NODE_MAJOR" -lt 22 ]]; then
+    echo "Upgrading Node.js (need v22+, have v$(node -v))..."
     brew upgrade node
   else
     echo "Node.js: $(node -v)"

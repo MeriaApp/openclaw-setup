@@ -21,11 +21,12 @@ if command -v openclaw &>/dev/null; then
   VERSION=$(openclaw --version 2>/dev/null || echo "unknown")
   check_pass "OpenClaw installed: $VERSION"
 
-  # Check minimum safe version
-  if [[ "$VERSION" > "2026.1.28" ]] || [[ "$VERSION" == "2026.1.29" ]]; then
-    check_pass "Version >= 2026.1.29 (CVE-2026-25253 patched)"
+  # Check minimum safe version (proper semver comparison)
+  MIN_VERSION="2026.1.29"
+  if printf '%s\n' "$MIN_VERSION" "$VERSION" | sort -V | head -1 | grep -q "^${MIN_VERSION}$"; then
+    check_pass "Version >= $MIN_VERSION (CVE-2026-25253 patched)"
   else
-    check_fail "Version may be vulnerable to CVE-2026-25253. Update: npm update -g openclaw"
+    check_fail "Version $VERSION may be vulnerable to CVE-2026-25253. Update: npm update -g openclaw"
   fi
 else
   check_fail "OpenClaw not installed"

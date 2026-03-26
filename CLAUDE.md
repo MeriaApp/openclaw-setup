@@ -118,23 +118,24 @@ chmod 600 /Users/openclaw/.openclaw/.env'
 
 ---
 
-## Step 5: Messaging Channel
+## Step 5: Telegram Setup
 
-Ask the user which messaging app they want:
-- **Telegram** (recommended — easiest setup)
-- Signal
-- Discord
-- WhatsApp
+**IMPORTANT: Do NOT run setup-telegram.sh** — it uses interactive `read` prompts Claude Code cannot handle.
 
-For Telegram:
-1. User creates a bot via @BotFather in Telegram
-2. User sends a message to @userinfobot to get their numeric Telegram ID
-3. These go into the .env and the allowlist in openclaw.json
+Ask the user in chat for:
+1. Their Telegram bot token (from @BotFather) — should already be in .env from Step 4
+2. Their Telegram numeric user ID (from @userinfobot)
 
-Run:
+Then configure the allowlist directly:
 ```bash
-sudo -u openclaw bash scripts/setup-telegram.sh
+sudo -u openclaw -i bash -c "jq --argjson uid <USER_ID_HERE> \
+  '.channels.telegram.dmPolicy = \"allowlist\" | .channels.telegram.allowFrom = [\$uid]' \
+  /Users/openclaw/.openclaw/openclaw.json > /tmp/oc-tmp.json \
+  && mv /tmp/oc-tmp.json /Users/openclaw/.openclaw/openclaw.json \
+  && chmod 600 /Users/openclaw/.openclaw/openclaw.json"
 ```
+
+Replace `<USER_ID_HERE>` with the numeric ID the user provides.
 
 ---
 
@@ -144,7 +145,6 @@ Run `scripts/install-daemon.sh` — it:
 - Copies the launchd plist from `config/ai.openclaw.gateway.plist`
 - Configures auto-start on boot
 - Configures auto-restart on crash
-- Sets up log rotation
 
 ```bash
 sudo -u openclaw -i bash $(pwd)/scripts/install-daemon.sh
@@ -206,6 +206,19 @@ sudo -u openclaw -i bash $(pwd)/scripts/verify.sh
 
 If anything fails, the script tells you exactly what to fix.
 
+Also run the built-in diagnostics:
+```bash
+sudo -u openclaw -i openclaw doctor
+sudo -u openclaw -i openclaw security audit --fix
+```
+
+Then lock the config so the agent can't weaken its own security:
+```bash
+sudo chflags uchg /Users/openclaw/.openclaw/openclaw.json
+```
+
+(To unlock for future edits: `sudo chflags nouchg /Users/openclaw/.openclaw/openclaw.json`)
+
 ---
 
 ## Step 9: Test It
@@ -226,16 +239,24 @@ sudo -u openclaw -i tail -50 /Users/openclaw/.openclaw/logs/openclaw-error.log
 
 ## Step 10: Daily Briefing (Optional)
 
-Ask the user if they want a daily morning briefing. If yes, run:
+**IMPORTANT: Do NOT run setup-briefing.sh** — it uses interactive `read` prompts.
+
+Ask the user if they want a daily morning briefing and what time (default 7am). Then configure directly:
+
 ```bash
-sudo -u openclaw -i bash $(pwd)/scripts/setup-briefing.sh
+sudo chflags nouchg /Users/openclaw/.openclaw/openclaw.json
+sudo -u openclaw -i bash -c "jq '.cron = [{ \
+  \"schedule\": \"0 7 * * 1-5\", \
+  \"prompt\": \"Good morning. Give me a briefing: today'\''s weather, my calendar, and a summary of important unread emails. Keep it concise.\", \
+  \"channel\": \"telegram\", \
+  \"enabled\": true \
+}]' /Users/openclaw/.openclaw/openclaw.json > /tmp/oc-tmp.json \
+  && mv /tmp/oc-tmp.json /Users/openclaw/.openclaw/openclaw.json \
+  && chmod 600 /Users/openclaw/.openclaw/openclaw.json"
+sudo chflags uchg /Users/openclaw/.openclaw/openclaw.json
 ```
 
-This configures a cron job that runs at 7am and sends a Telegram summary of:
-- Weather
-- Calendar for the day
-- Unread email count
-- Any custom data sources they configure later
+Adjust the cron schedule as needed (the `0 7` means 7:00am, `1-5` means weekdays).
 
 ---
 
